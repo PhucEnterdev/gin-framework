@@ -3,8 +3,8 @@ package v1handler
 import (
 	"net/http"
 
+	"enterdev.com.vn/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -21,23 +21,32 @@ func (u *UserHandler) GetUsersV1(ctx *gin.Context) {
 }
 
 func (u *UserHandler) GetUserByIDV1(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := utils.ValidationPositiveInt("ID", idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Get user by ID (V1)",
+		"id":      id,
 	})
 }
 
 func (u *UserHandler) GetUserByUUIDV1(ctx *gin.Context) {
 	uuidStr := ctx.Param("uuid")
-	_, err := uuid.Parse(uuidStr)
+	uid, err := utils.ValidationUUID("UUID", uuidStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID must be a valid UUID",
+			"error": err.Error(),
 		})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":   "Get user by UUID (V1)",
-		"user_uuid": uuidStr,
+		"user_uuid": uid,
 	})
 }
 
