@@ -14,6 +14,7 @@ func main() {
 	userHandler := v1handler.NewUserHandler()
 	productHandler := v1handler.NewProductHandler()
 	categoryHandler := v1handler.NewCategoryHandler()
+	newsHandler := v1handler.NewNewsHandler()
 
 	r.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -45,6 +46,12 @@ func main() {
 		category := v1.Group("/categories")
 		{
 			category.GET("/:category", categoryHandler.GetCategoryByCategoryV1)
+		}
+
+		news := v1.Group("/news")
+		{
+			news.GET("/", newsHandler.GetNewsV1)
+			news.GET("/:slug", newsHandler.GetNewsV1)
 		}
 
 	}
