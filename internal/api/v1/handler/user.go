@@ -10,6 +10,10 @@ import (
 type UserHandler struct {
 }
 
+type GetUserByIDV1Param struct {
+	ID int `uri:"id" binding:"gt=0"`
+}
+
 func NewUserHandler() *UserHandler {
 	return &UserHandler{}
 }
@@ -21,17 +25,13 @@ func (u *UserHandler) GetUsersV1(ctx *gin.Context) {
 }
 
 func (u *UserHandler) GetUserByIDV1(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := utils.ValidationPositiveInt("ID", idStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetUserByIDV1Param
+	if err := ctx.ShouldBindUri(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandlerValidationErrors(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Get user by ID (V1)",
-		"id":      id,
 	})
 }
 

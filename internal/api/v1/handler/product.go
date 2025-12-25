@@ -9,8 +9,7 @@ import (
 )
 
 var (
-	slugRegex   = regexp.MustCompile(`^[a-z0-9]+(?:[-.][a-z0-9]+)*$`)
-	searchRegex = regexp.MustCompile(`^[a-zA-Z0-9\s]+$`)
+	slugRegex = regexp.MustCompile(`^[a-z0-9]+(?:[-.][a-z0-9]+)*$`)
 )
 
 type ProductHandler struct {

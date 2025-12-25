@@ -2,12 +2,35 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
+/*
+Validation use package
+*/
+func HandlerValidationErrors(err error) gin.H {
+	if validationError, ok := err.(validator.ValidationErrors); ok {
+		// errors := make(map[string]string)
+
+		for _, e := range validationError {
+			log.Printf("%v", e)
+		}
+	}
+	return gin.H{
+		"error": "Yêu cầu không hợp lệ " + err.Error(),
+	}
+}
+
+/*
+*
+manual Validation
+*/
 func ValidationRequired(field, value string) error {
 	if value == "" {
 		return fmt.Errorf("%s is required", field)
