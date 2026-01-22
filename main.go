@@ -5,11 +5,16 @@ import (
 	"net/http"
 
 	v1handler "enterdev.com.vn/internal/api/v1/handler"
+	"enterdev.com.vn/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	r := gin.Default()
+
+	if err := utils.RegisterValidator(); err != nil {
+		panic(err)
+	}
 
 	userHandler := v1handler.NewUserHandler()
 	productHandler := v1handler.NewProductHandler()

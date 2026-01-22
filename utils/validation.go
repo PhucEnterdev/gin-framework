@@ -2,11 +2,12 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
@@ -14,17 +15,33 @@ import (
 /*
 Validation use package
 */
-func HandlerValidationErrors(err error) gin.H {
-	if validationError, ok := err.(validator.ValidationErrors); ok {
-		// errors := make(map[string]string)
-
-		for _, e := range validationError {
-			log.Printf("%v", e)
+func HandleValidationErrors(err error) gin.H {
+	if validationErrpr, ok := err.(validator.ValidationErrors); ok {
+		errors := make(map[string]string)
+		for _, e := range validationErrpr {
+			switch e.Tag() {
+			case "gt":
+				errors[e.Field()] = e.Field() + " phải lớn hơn giá trị tối thiểu"
+			case "slug":
+				errors[e.Field()] = e.Field() + " phải là số, chữ thường và dấu gạch chân hoặc dấu chấm"
+			case "uuid":
+				errors[e.Field()] = e.Field() + " phải là UUID hợp lệ"
+			case "min":
+				errors[e.Field()] = fmt.Sprintf("%s phải nhiều hơn %s ký tự", e.Field(), e.Param())
+			case "max":
+				errors[e.Field()] = fmt.Sprintf("%s phải ít hơn %s ký tự", e.Field(), e.Param())
+			case "oneof":
+				allowedValues := strings.Join(strings.Split(e.Param(), " "), ",")
+				errors[e.Field()] = fmt.Sprintf("%s phải là 1 trong những giá trị: %s", e.Field(), allowedValues)
+			case "search":
+				errors[e.Field()] = fmt.Sprintf("%s phải là chữ thường, chữ hoa, số và khoảng trắng", e.Field())
+			case "required":
+				errors[e.Field()] = fmt.Sprintf("%s là bắt buộc", e.Field())
+			}
 		}
+		return gin.H{"error": errors}
 	}
-	return gin.H{
-		"error": "Yêu cầu không hợp lệ " + err.Error(),
-	}
+	return gin.H{"error": "Yêu cầu không hợp lệ"}
 }
 
 /*
@@ -88,4 +105,22 @@ func keys(m map[string]bool) []string {
 		k = append(k, key)
 	}
 	return k
+}
+
+func RegisterValidator() error {
+	v, ok := binding.Validator.Engine().(*validator.Validate)
+	if !ok {
+		return fmt.Errorf("failed to get validator engine")
+	}
+	var slugRegex = regexp.MustCompile(`^[a-z0-9]+(?:[-.][a-z0-9]+)*$`)
+	v.RegisterValidation("slug", func(fl validator.FieldLevel) bool {
+		return slugRegex.MatchString(fl.Field().String())
+	})
+
+	var searchRegex = regexp.MustCompile(`^[a-zA-Z0-9\s]+$`)
+	v.RegisterValidation("search", func(fl validator.FieldLevel) bool {
+		return searchRegex.MatchString(fl.Field().String())
+	})
+
+	return nil
 }

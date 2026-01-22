@@ -1,6 +1,7 @@
 package v1handler
 
 import (
+	"log"
 	"net/http"
 	"regexp"
 
@@ -15,30 +16,40 @@ var (
 type ProductHandler struct {
 }
 
+type GetProductsV1Param struct {
+	Search string `form:"search" binding:"required,min=2,max=50,search"`
+}
+
+type GetProductBySlugV1Param struct {
+	Slug string `uri:"slug" binding:"slug,min=2,max=5"`
+}
+
 func NewProductHandler() *ProductHandler {
 	return &ProductHandler{}
 }
 
 func (p *ProductHandler) GetProductsV1(ctx *gin.Context) {
-	limit := ctx.DefaultQuery("limit", "10")
+	var params GetProductsV1Param
+	if err := ctx.ShouldBindQuery(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandleValidationErrors(err))
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "List all products (V1)",
-		"limit":   limit,
+		"search":  params.Search,
 	})
 }
 
 func (p *ProductHandler) GetProductBySlugV1(ctx *gin.Context) {
-	slug := ctx.Param("slug")
-	if err := utils.ValidationRegex(slug, slugRegex, "Slug must contain only lowercase letter, numbers, hyphens and dots"); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetProductBySlugV1Param
+	if err := ctx.ShouldBindUri(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandleValidationErrors(err))
+		log.Println(err)
 		return
 	}
-
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Get product by Slug (V1)",
-		"slug":    slug,
+		"slug":    params.Slug,
 	})
 }
 

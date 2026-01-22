@@ -16,22 +16,23 @@ var validCategory = map[string]bool{
 type CategoryHandler struct {
 }
 
+type GetCategoryByCategoryParam struct {
+	Category string `uri:"category" binding:"oneof=php golang python"`
+}
+
 func NewCategoryHandler() *CategoryHandler {
 	return &CategoryHandler{}
 }
 
 func (c *CategoryHandler) GetCategoryByCategoryV1(ctx *gin.Context) {
-	category := ctx.Param("category")
-
-	if err := utils.ValidationInList("Category", category, validCategory); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetCategoryByCategoryParam
+	if err := ctx.ShouldBindUri(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandleValidationErrors(err))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":  "Category found",
-		"category": category,
+		"category": params.Category,
 	})
 }
