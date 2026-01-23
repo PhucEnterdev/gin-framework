@@ -34,7 +34,7 @@ func main() {
 			user.GET("/", userHandler.GetUsersV1)
 			user.GET("/:id", userHandler.GetUserByIDV1)
 			user.GET("/admin/:uuid", userHandler.GetUserByUUIDV1)
-			user.POST("/:id", userHandler.CreateUserV1)
+			user.POST("/", userHandler.CreateUserV1)
 			user.PUT("/:id", userHandler.UpdateUserV1)
 			user.DELETE("/:id", userHandler.DeleteUserV1)
 		}
@@ -43,7 +43,7 @@ func main() {
 		{
 			product.GET("/", productHandler.GetProductsV1)
 			product.GET("/:slug", productHandler.GetProductBySlugV1)
-			product.POST("/:id", productHandler.CreateProductV1)
+			product.POST("/", productHandler.CreateProductV1)
 			product.PUT("/:id", productHandler.UpdateProductV1)
 			product.DELETE("/:id", productHandler.DeleteProductV1)
 		}

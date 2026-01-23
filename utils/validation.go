@@ -19,24 +19,40 @@ func HandleValidationErrors(err error) gin.H {
 	if validationErrpr, ok := err.(validator.ValidationErrors); ok {
 		errors := make(map[string]string)
 		for _, e := range validationErrpr {
+
+			//CreatePostV1Body.ProductAttributes[2].AttributeName
+			// split index 0 (from .) to delete it
+			root := strings.Split(e.Namespace(), ".")[0]
+			// TrimPrefix CreatePostV1Body.ProductAttributes[2].AttributeName
+			// from index 0 to .
+			// => ProductAttributes[2].AttributeName
+			fieldPath := strings.TrimPrefix(e.Namespace(), root+".")
+
 			switch e.Tag() {
 			case "gt":
-				errors[e.Field()] = e.Field() + " phải lớn hơn giá trị tối thiểu"
+				errors[fieldPath] = fmt.Sprintf("%s phải nhiều hơn %s", fieldPath, e.Param())
+			case "lt":
+				errors[fieldPath] = fmt.Sprintf("%s phải ít hơn %s", fieldPath, e.Param())
 			case "slug":
-				errors[e.Field()] = e.Field() + " phải là số, chữ thường và dấu gạch chân hoặc dấu chấm"
+				errors[fieldPath] = fieldPath + " phải là số, chữ thường và dấu gạch chân hoặc dấu chấm"
 			case "uuid":
-				errors[e.Field()] = e.Field() + " phải là UUID hợp lệ"
+				errors[fieldPath] = fieldPath + " phải là UUID hợp lệ"
 			case "min":
-				errors[e.Field()] = fmt.Sprintf("%s phải nhiều hơn %s ký tự", e.Field(), e.Param())
+				errors[fieldPath] = fmt.Sprintf("%s phải nhiều hơn %s ký tự", fieldPath, e.Param())
 			case "max":
-				errors[e.Field()] = fmt.Sprintf("%s phải ít hơn %s ký tự", e.Field(), e.Param())
+				errors[fieldPath] = fmt.Sprintf("%s phải ít hơn %s ký tự", fieldPath, e.Param())
+			case "min_int":
+				errors[fieldPath] = fmt.Sprintf("%s phải có giá trị lớn hơn %s", fieldPath, e.Param())
+			case "max_int":
+				errors[fieldPath] = fmt.Sprintf("%s phải có giá trị nhỏ hơn %s", fieldPath, e.Param())
 			case "oneof":
 				allowedValues := strings.Join(strings.Split(e.Param(), " "), ",")
-				errors[e.Field()] = fmt.Sprintf("%s phải là 1 trong những giá trị: %s", e.Field(), allowedValues)
+				errors[fieldPath] = fmt.Sprintf("%s phải là 1 trong những giá trị: %s", fieldPath, allowedValues)
 			case "search":
-				errors[e.Field()] = fmt.Sprintf("%s phải là chữ thường, chữ hoa, số và khoảng trắng", e.Field())
+				errors[fieldPath] = fmt.Sprintf("%s phải là chữ thường, chữ hoa, số và khoảng trắng", fieldPath)
 			case "required":
-				errors[e.Field()] = fmt.Sprintf("%s là bắt buộc", e.Field())
+				errors[fieldPath] = fmt.Sprintf("%s là bắt buộc", fieldPath)
+
 			}
 		}
 		return gin.H{"error": errors}
@@ -120,6 +136,24 @@ func RegisterValidator() error {
 	var searchRegex = regexp.MustCompile(`^[a-zA-Z0-9\s]+$`)
 	v.RegisterValidation("search", func(fl validator.FieldLevel) bool {
 		return searchRegex.MatchString(fl.Field().String())
+	})
+
+	v.RegisterValidation("min_int", func(fl validator.FieldLevel) bool {
+		minStr := fl.Param()
+		minValue, err := strconv.Atoi(minStr)
+		if err != nil {
+			return false
+		}
+		return int(fl.Field().Int()) >= minValue
+	})
+
+	v.RegisterValidation("max_int", func(fl validator.FieldLevel) bool {
+		maxStr := fl.Param()
+		maxValue, err := strconv.Atoi(maxStr)
+		if err != nil {
+			return false
+		}
+		return int(fl.Field().Int()) <= maxValue
 	})
 
 	return nil
