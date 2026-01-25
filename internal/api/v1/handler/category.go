@@ -15,6 +15,10 @@ var validCategory = map[string]bool{
 
 type CategoryHandler struct {
 }
+type CreateCategoryV1Body struct {
+	Name   string `form:"name" binding:"required"`
+	Status string `form:"status" binding:"required,oneof=1 2"`
+}
 
 type GetCategoryByCategoryParam struct {
 	Category string `uri:"category" binding:"oneof=php golang python"`
@@ -34,5 +38,18 @@ func (c *CategoryHandler) GetCategoryByCategoryV1(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":  "Category found",
 		"category": params.Category,
+	})
+}
+
+func (c *CategoryHandler) CreateCategory(ctx *gin.Context) {
+	var body CreateCategoryV1Body
+	if err := ctx.ShouldBind(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandleValidationErrors(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Create category successfully",
+		"name":    body.Name,
+		"status":  body.Status,
 	})
 }

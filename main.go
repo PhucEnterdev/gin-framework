@@ -51,11 +51,14 @@ func main() {
 		category := v1.Group("/categories")
 		{
 			category.GET("/:category", categoryHandler.GetCategoryByCategoryV1)
+			category.POST("/", categoryHandler.CreateCategory)
 		}
 
 		news := v1.Group("/news")
 		{
 			news.GET("/", newsHandler.GetNewsV1)
+			news.POST("/", newsHandler.CreateNewsV1)
+			news.POST("/upload-file", newsHandler.CreateUploadFileNewsV1)
 			news.GET("/:slug", newsHandler.GetNewsV1)
 		}
 

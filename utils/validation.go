@@ -155,6 +155,5 @@ func RegisterValidator() error {
 		}
 		return int(fl.Field().Int()) <= maxValue
 	})
-
 	return nil
 }
