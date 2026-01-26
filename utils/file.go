@@ -33,7 +33,7 @@ func ValidateAndSaveFile(fileHeader *multipart.FileHeader, uploadDir string) (st
 		return "", errors.New("unsupported file extension")
 	}
 	// check size
-	if fileHeader.Size > 5<<20 {
+	if fileHeader.Size > 10<<20 {
 		return "", errors.New("file too large (max 5MB)")
 	}
 

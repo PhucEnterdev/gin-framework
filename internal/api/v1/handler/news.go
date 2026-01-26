@@ -117,3 +117,55 @@ func (n *NewsHandler) CreateUploadFileNewsV1(ctx *gin.Context) {
 		"path":    "./upload/" + filename,
 	})
 }
+
+func (n *NewsHandler) CreateUploadMultipleFileNewsV1(ctx *gin.Context) {
+	var body CreateNewsV1Body
+	if err := ctx.ShouldBind(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.HandleValidationErrors(err))
+		return
+	}
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid multipart form",
+		})
+		return
+	}
+
+	images := form.File["images"]
+	if len(images) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "no file provided",
+		})
+		return
+	}
+
+	var successFiles []string
+	var failedFiles []map[string]string
+	for _, image := range images {
+		filename, err := utils.ValidateAndSaveFile(image, "./upload")
+		if err != nil {
+			failedFiles = append(failedFiles, map[string]string{
+				"filename": image.Filename,
+				"error":    err.Error(),
+			})
+			continue
+		}
+
+		successFiles = append(successFiles, filename)
+	}
+
+	resp := gin.H{
+		"message":       "Create news successfully",
+		"title":         body.Titile,
+		"status":        body.Status,
+		"success_files": successFiles,
+	}
+
+	if len(failedFiles) > 0 {
+		resp["message"] = "Upload file completed with partical errors"
+		resp["failed_files"] = failedFiles
+	}
+
+	ctx.JSON(http.StatusCreated, resp)
+}
