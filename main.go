@@ -5,16 +5,26 @@ import (
 	"net/http"
 
 	v1handler "enterdev.com.vn/internal/api/v1/handler"
+	"enterdev.com.vn/middleware"
 	"enterdev.com.vn/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+
 	r := gin.Default()
+	r.Use(middleware.ApiKeyMiddleware(), middleware.RateLimitingMiddleware())
+	go middleware.CleanUpClients()
 
 	if err := utils.RegisterValidator(); err != nil {
 		panic(err)
 	}
+
+	r.StaticFS("/images", gin.Dir("./upload", false))
 
 	userHandler := v1handler.NewUserHandler()
 	productHandler := v1handler.NewProductHandler()
@@ -49,6 +59,7 @@ func main() {
 		}
 
 		category := v1.Group("/categories")
+		category.Use(middleware.SimpleMiddleware())
 		{
 			category.GET("/:category", categoryHandler.GetCategoryByCategoryV1)
 			category.POST("/", categoryHandler.CreateCategory)
@@ -60,7 +71,7 @@ func main() {
 			news.POST("/", newsHandler.CreateNewsV1)
 			news.POST("/upload-file", newsHandler.CreateUploadFileNewsV1)
 			news.POST("/upload-multiple-file", newsHandler.CreateUploadMultipleFileNewsV1)
-			news.GET("/:slug", newsHandler.GetNewsV1)
+			news.GET("/:slug", middleware.ApiKeyMiddleware(), newsHandler.GetNewsV1)
 		}
 
 	}
